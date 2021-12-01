@@ -1,8 +1,21 @@
 from fastapi import FastAPI
 
+from app.api.movies import movies
+from app.api.db import engine, metadata, database
+
+metadata.create_all(engine)
+
 app = FastAPI()
 
 
-@app.get('/')
-async def index():
-    return {"Real": "Python"}
+@app.on_event('startup')
+async def startup():
+    await database.connect()
+
+
+@app.on_event('shutdown')
+async def shutdown():
+    await database.disconnect()
+
+
+app.include_router(movies, prefix='/api/v1')
